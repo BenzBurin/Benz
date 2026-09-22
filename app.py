@@ -807,32 +807,61 @@ new Chart(document.getElementById('equityChart'), {
 
 
 LEG_ROW_JS = """
+function pad2(n) { return String(n).padStart(2, '0'); }
+function hourOptions(selected) {
+  let out = '';
+  for (let h = 0; h < 24; h++) {
+    const v = pad2(h);
+    out += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v}</option>`;
+  }
+  return out;
+}
+function minuteOptions(selected) {
+  let out = '';
+  for (let m = 0; m < 60; m++) {
+    const v = pad2(m);
+    out += `<option value="${v}" ${v === selected ? 'selected' : ''}>${v}</option>`;
+  }
+  return out;
+}
 function legRow(side, data) {
   data = data || {};
   const row = document.createElement('div');
-  row.className = 'grid grid-cols-12 gap-2 items-center bg-slate-800/60 rounded-lg p-2 leg-row';
+  row.className = 'flex flex-wrap items-center gap-2 bg-slate-800/60 rounded-lg p-2 leg-row';
   const checkedAttr = data.executed === false ? '' : 'checked';
   const hiddenVal = data.executed === false ? '0' : '1';
+  const timeParts = (data.time || nowStr()).split(':');
+  const hour = timeParts[0] || '00';
+  const minute = timeParts[1] || '00';
   row.innerHTML = `
     <input type="hidden" name="${side}_row_id[]" class="row-id" value="${data.id || ''}">
-    <input type="date" name="${side}_date[]" required value="${data.date || todayStr()}" class="col-span-3 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm">
-    <input type="time" name="${side}_time[]" required value="${data.time || nowStr()}" class="col-span-2 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm">
-    <input type="number" step="any" name="${side}_qty[]" required placeholder="จำนวน" value="${data.qty || ''}" class="col-span-2 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm qty-input">
-    <input type="number" step="any" name="${side}_price[]" required placeholder="ราคา" value="${data.price || ''}" class="col-span-2 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm">
-    <input type="number" step="any" name="${side}_fee[]" placeholder="อัตโนมัติ" value="${data.fee || ''}" class="col-span-1 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm">
-    <label class="col-span-1 flex items-center gap-1 text-xs text-slate-400">
+    <input type="date" name="${side}_date[]" required value="${data.date || todayStr()}" class="w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm date-input">
+    <select name="${side}_hour[]" class="w-16 bg-slate-800 border border-slate-700 rounded px-1 py-1.5 text-sm hour-select">${hourOptions(hour)}</select>
+    <span class="text-slate-500">:</span>
+    <select name="${side}_minute[]" class="w-16 bg-slate-800 border border-slate-700 rounded px-1 py-1.5 text-sm minute-select">${minuteOptions(minute)}</select>
+    <button type="button" class="now-btn text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded" title="ใส่วันเวลาปัจจุบัน">ตอนนี้</button>
+    <input type="number" step="any" name="${side}_qty[]" required placeholder="จำนวน" value="${data.qty || ''}" list="qty-presets" class="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm qty-input">
+    <input type="number" step="any" name="${side}_price[]" required placeholder="ราคา" value="${data.price || ''}" class="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm">
+    <input type="number" step="any" name="${side}_fee[]" placeholder="อัตโนมัติ" value="${data.fee || ''}" class="w-20 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm">
+    <label class="flex items-center gap-1 text-xs text-slate-400 whitespace-nowrap">
       <input type="checkbox" ${checkedAttr} class="done-check" onchange="this.parentElement.querySelector('.done-hidden').value = this.checked ? '1' : '0'">
       ทำแล้ว
       <input type="hidden" name="${side}_done[]" class="done-hidden" value="${hiddenVal}">
     </label>
-    <button type="button" class="col-span-1 text-rose-400 hover:text-rose-300 text-sm remove-row">ลบ</button>
-    <input type="text" name="${side}_note[]" placeholder="หมายเหตุ" value="${data.note || ''}" class="col-span-6 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm">
-    <div class="col-span-6 flex items-center gap-2">
+    <button type="button" class="text-rose-400 hover:text-rose-300 text-sm remove-row">ลบ</button>
+    <input type="text" name="${side}_note[]" placeholder="หมายเหตุ" value="${data.note || ''}" class="flex-1 min-w-[10rem] bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm">
+    <div class="flex items-center gap-2 w-full">
       <input type="file" name="${side}_image[]" accept="image/*" class="text-xs flex-1">
       ${data.image ? `<a href="/uploads/${data.image}" target="_blank" class="text-xs text-emerald-400 hover:underline">ภาพเดิม</a>` : ''}
     </div>
   `;
   row.querySelector('.remove-row').addEventListener('click', () => row.remove());
+  row.querySelector('.now-btn').addEventListener('click', () => {
+    row.querySelector('.date-input').value = todayStr();
+    const now = nowStr().split(':');
+    row.querySelector('.hour-select').value = now[0];
+    row.querySelector('.minute-select').value = now[1];
+  });
   return row;
 }
 function todayStr() { return new Date().toISOString().slice(0,10); }
@@ -855,10 +884,17 @@ TRADE_TEMPLATE = BASE_HEAD + """
 <h1 class="text-xl font-bold mb-4">{{ 'แก้ไขเทรด' if edit_trade else 'เพิ่มรายการเทรด' }}</h1>
 <form method="post" action="{{ url_for('trade_save') }}" enctype="multipart/form-data" class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4 mb-8">
   <input type="hidden" name="trade_id" value="{{ edit_trade['id'] if edit_trade else '' }}">
+  <datalist id="qty-presets">
+    <option value="100"><option value="200"><option value="300"><option value="500">
+    <option value="1000"><option value="2000"><option value="3000"><option value="5000"><option value="10000">
+  </datalist>
   <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
     <div class="md:col-span-2">
       <label class="block text-sm text-slate-400 mb-1">ชื่อหุ้น</label>
-      <input name="symbol" required placeholder="เช่น IVL" value="{{ edit_trade['symbol'] if edit_trade else '' }}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 uppercase">
+      <input name="symbol" required placeholder="เช่น IVL" value="{{ edit_trade['symbol'] if edit_trade else '' }}" list="symbol-list" oninput="this.value = this.value.toUpperCase()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 uppercase">
+      <datalist id="symbol-list">
+        {% for sym in known_symbols %}<option value="{{ sym }}">{% endfor %}
+      </datalist>
     </div>
     <div>
       <label class="block text-sm text-slate-400 mb-1">ฝั่ง</label>
@@ -1318,6 +1354,9 @@ def trade_page():
     edit_id = request.args.get("edit", type=int)
     edit_trade = fetch_order(edit_id) if edit_id else None
     edit_json = json.dumps(_order_to_edit_json(edit_trade)) if edit_trade else "null"
+    known_symbols = [
+        r["symbol"] for r in get_db().execute("SELECT DISTINCT symbol FROM orders ORDER BY symbol")
+    ]
     return render_template_string(
         TRADE_TEMPLATE,
         title="บันทึกเทรด",
@@ -1327,6 +1366,7 @@ def trade_page():
         strategies=get_strategies(),
         edit_trade=edit_trade,
         edit_json=edit_json,
+        known_symbols=known_symbols,
     )
 
 
@@ -1376,7 +1416,8 @@ def trade_save():
 
     for side, action in (("open", "open"), ("close", "close")):
         dates = request.form.getlist(f"{side}_date[]")
-        times = request.form.getlist(f"{side}_time[]")
+        hours = request.form.getlist(f"{side}_hour[]")
+        minutes = request.form.getlist(f"{side}_minute[]")
         qtys = request.form.getlist(f"{side}_qty[]")
         prices = request.form.getlist(f"{side}_price[]")
         fees = request.form.getlist(f"{side}_fee[]")
@@ -1394,7 +1435,9 @@ def trade_save():
             fee = float(fee_raw) if fee_raw else round(qty * price * fee_rate / 100, 2)
             executed = 1 if (i < len(dones) and dones[i] == "1") else 0
             note_leg = notes[i] if i < len(notes) else ""
-            exec_time = f"{dates[i]} {times[i] if i < len(times) else '00:00'}"
+            hh = hours[i] if i < len(hours) else "00"
+            mm = minutes[i] if i < len(minutes) else "00"
+            exec_time = f"{dates[i]} {hh}:{mm}"
             row_id = row_ids[i].strip() if i < len(row_ids) else ""
             image_file = images[i] if i < len(images) else None
             new_image = save_image(image_file)
