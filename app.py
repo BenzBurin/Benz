@@ -970,7 +970,7 @@ TRADE_TEMPLATE = BASE_HEAD + """
     <td class="p-3">{% if o['strategy'] %}<span class="px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">{{ o['strategy'] }}</span>{% endif %}</td>
     <td class="p-3 text-right">{{ '{:,.2f}'.format(s.avg_open) if s.avg_open else '–' }}</td>
     <td class="p-3 text-right">{{ '{:,.2f}'.format(s.avg_close) if s.avg_close else '–' }}</td>
-    <td class="p-3 text-right">{{ '{:,.0f}'.format(s.closed_qty) }} / {{ '{:,.0f}'.format(s.opened_qty) }} / {{ '{:,.0f}'.format(s.remaining_qty) }}</td>
+    <td class="p-3 text-right">{{ '{:,.0f}'.format(s.opened_qty) }} / {{ '{:,.0f}'.format(s.closed_qty) }} / {{ '{:,.0f}'.format(s.remaining_qty) }}</td>
     <td class="p-3 text-right {{ 'text-emerald-400' if s.realized_pnl>=0 else 'text-rose-400' }}">{{ '{:,.2f}'.format(s.realized_pnl) }}</td>
     <td class="p-3 text-right">{{ '{:+.1f}%'.format(s.roi_pct) if s.roi_pct is not none else '–' }}</td>
     <td class="p-3 text-right">{{ '%.2fR'|format(s.r_multiple) if s.r_multiple is not none else '–' }}</td>
