@@ -7,6 +7,7 @@ trading performance (win rate, profit factor, realized P/L) plus a
 portfolio growth curve from an initial capital setting.
 """
 
+import json
 import os
 import sqlite3
 import uuid
@@ -22,6 +23,14 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
+
+try:
+    import gspread
+    from google.oauth2.service_account import Credentials as GoogleServiceCredentials
+
+    GSPREAD_AVAILABLE = True
+except ImportError:
+    GSPREAD_AVAILABLE = False
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "trades.db")
@@ -226,6 +235,122 @@ def save_image(file_storage):
     fname = f"{uuid.uuid4().hex}.{ext}"
     file_storage.save(os.path.join(UPLOAD_DIR, fname))
     return fname
+
+
+# ---------------------------------------------------------------------------
+# Google Sheets backup
+# ---------------------------------------------------------------------------
+
+GOOGLE_SHEETS_SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.file",
+]
+
+
+def get_gspread_client():
+    if not GSPREAD_AVAILABLE:
+        raise RuntimeError(
+            "ยังไม่ได้ติดตั้งไลบรารีที่จำเป็น กรุณารัน: pip install gspread google-auth"
+        )
+    creds_raw = get_setting("google_credentials_json", "")
+    if not creds_raw:
+        raise RuntimeError("ยังไม่ได้ตั้งค่า Google Service Account credentials ในหน้า Settings")
+    try:
+        info = json.loads(creds_raw)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Credentials JSON ไม่ถูกต้อง: {exc}") from exc
+    credentials = GoogleServiceCredentials.from_service_account_info(
+        info, scopes=GOOGLE_SHEETS_SCOPES
+    )
+    return gspread.authorize(credentials)
+
+
+def _write_sheet(spreadsheet, title, rows):
+    try:
+        ws = spreadsheet.worksheet(title)
+        ws.clear()
+    except gspread.exceptions.WorksheetNotFound:
+        ws = spreadsheet.add_worksheet(title=title, rows=max(len(rows) + 10, 100), cols=26)
+    if rows:
+        ws.append_rows(rows, value_input_option="RAW")
+
+
+def backup_to_google_sheets():
+    """Export orders, executions and the performance summary to a Google Sheet.
+
+    Returns the spreadsheet URL on success; raises RuntimeError with a
+    human-readable message on failure.
+    """
+    client = get_gspread_client()
+
+    spreadsheet_id = (get_setting("google_spreadsheet_id", "") or "").strip()
+    if spreadsheet_id:
+        try:
+            sh = client.open_by_key(spreadsheet_id)
+        except gspread.exceptions.APIError as exc:
+            raise RuntimeError(f"เปิด Spreadsheet ไม่สำเร็จ: {exc}") from exc
+    else:
+        sh = client.create("Trading Journal Backup")
+        set_setting("google_spreadsheet_id", sh.id)
+        share_email = (get_setting("google_share_email", "") or "").strip()
+        if share_email:
+            sh.share(share_email, perm_type="user", role="writer")
+
+    orders = fetch_orders()
+    order_rows = [
+        [
+            "ID", "Symbol", "Direction", "Note", "Created At", "Status",
+            "Avg Open", "Avg Close", "Opened Qty", "Closed Qty",
+            "Remaining Qty", "Realized P/L",
+        ]
+    ]
+    exec_rows = [
+        ["Order ID", "Symbol", "Action", "Qty", "Price", "Exec Time", "Note", "Image Filename"]
+    ]
+    for o in orders:
+        executions = fetch_executions(o["id"])
+        stats = compute_order_stats(o, executions)
+        order_rows.append(
+            [
+                o["id"], o["symbol"], o["direction"], o["note"] or "", o["created_at"],
+                stats["status"], round(stats["avg_open"], 4), round(stats["avg_close"], 4),
+                stats["opened_qty"], stats["closed_qty"], stats["remaining_qty"],
+                round(stats["realized_pnl"], 2),
+            ]
+        )
+        for e in executions:
+            exec_rows.append(
+                [
+                    o["id"], o["symbol"], e["action"], e["qty"], e["price"], e["exec_time"],
+                    e["note"] or "", e["image_filename"] or "",
+                ]
+            )
+
+    portfolio = compute_portfolio()
+    summary_rows = [
+        ["Metric", "Value"],
+        ["Initial Capital", portfolio["initial_capital"]],
+        ["Current Equity", round(portfolio["current_equity"], 2)],
+        ["Growth %", round(portfolio["growth_pct"], 2)],
+        ["Total Realized P/L", round(portfolio["total_realized"], 2)],
+        ["Win Rate %", round(portfolio["win_rate"], 2)],
+        [
+            "Profit Factor",
+            portfolio["profit_factor"] if portfolio["profit_factor"] != float("inf") else "inf",
+        ],
+        ["Avg Win", round(portfolio["avg_win"], 2)],
+        ["Avg Loss", round(portfolio["avg_loss"], 2)],
+        ["Backup Time", datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+    ]
+
+    _write_sheet(sh, "Orders", order_rows)
+    _write_sheet(sh, "Executions", exec_rows)
+    _write_sheet(sh, "Summary", summary_rows)
+
+    url = f"https://docs.google.com/spreadsheets/d/{sh.id}"
+    set_setting("google_spreadsheet_url", url)
+    set_setting("google_last_backup", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    return url
 
 
 # ---------------------------------------------------------------------------
@@ -545,13 +670,63 @@ ORDER_DETAIL_TEMPLATE = BASE_HEAD + """
 
 SETTINGS_TEMPLATE = BASE_HEAD + """
 <h1 class="text-xl font-bold mb-4">ตั้งค่า</h1>
-<form method="post" class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4 max-w-md">
+<form method="post" action="{{ url_for('settings_page') }}" class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4 max-w-md mb-8">
   <div>
     <label class="block text-sm text-slate-400 mb-1">ทุนเริ่มต้นของพอร์ต</label>
     <input type="number" step="any" name="initial_capital" value="{{ initial_capital }}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2">
   </div>
   <button class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-medium">บันทึก</button>
 </form>
+
+<div class="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-2xl space-y-4">
+  <h2 class="text-lg font-semibold">สำรองข้อมูลไป Google Sheets</h2>
+  {% if not gspread_available %}
+  <div class="bg-amber-900/40 border border-amber-700 text-amber-200 px-4 py-2 rounded text-sm">
+    ยังไม่ได้ติดตั้งไลบรารีที่จำเป็น กรุณารัน <code class="bg-slate-800 px-1 rounded">pip install gspread google-auth</code> แล้วรีสตาร์ทแอป
+  </div>
+  {% endif %}
+  <p class="text-sm text-slate-400">
+    ต้องมี Google Service Account (ไฟล์ JSON Key) ที่เปิดใช้งาน Google Sheets API และ Drive API
+    วาง JSON ทั้งก้อนด้านล่าง ระบุ Spreadsheet ID ถ้ามีอยู่แล้ว (ไม่ระบุ = สร้างใหม่อัตโนมัติ)
+    และถ้าต้องการให้อีเมลส่วนตัวเห็นไฟล์ ให้กรอกอีเมลเพื่อแชร์สิทธิ์แก้ไขให้อัตโนมัติ
+  </p>
+  <form method="post" action="{{ url_for('save_google_settings') }}" class="space-y-3">
+    <div>
+      <label class="block text-sm text-slate-400 mb-1">Service Account JSON</label>
+      <textarea name="google_credentials_json" rows="6" placeholder='{"type": "service_account", ...}'
+                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 font-mono text-xs">{{ google_credentials_json }}</textarea>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-sm text-slate-400 mb-1">Spreadsheet ID (ถ้ามี)</label>
+        <input name="google_spreadsheet_id" value="{{ google_spreadsheet_id }}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm text-slate-400 mb-1">แชร์ให้อีเมล (ถ้าต้องการ)</label>
+        <input name="google_share_email" value="{{ google_share_email }}" placeholder="you@gmail.com" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <button class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-medium">บันทึกการตั้งค่า Google Sheets</button>
+  </form>
+
+  <hr class="border-slate-800">
+
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div class="text-sm text-slate-400">
+      {% if google_last_backup %}
+      สำรองข้อมูลล่าสุด: {{ google_last_backup }}
+      {% if google_spreadsheet_url %}
+      — <a href="{{ google_spreadsheet_url }}" target="_blank" class="text-emerald-400 hover:underline">เปิด Spreadsheet</a>
+      {% endif %}
+      {% else %}
+      ยังไม่เคยสำรองข้อมูล
+      {% endif %}
+    </div>
+    <form method="post" action="{{ url_for('run_google_backup') }}">
+      <button class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-medium">สำรองข้อมูลตอนนี้</button>
+    </form>
+  </div>
+</div>
 """ + BASE_TAIL
 
 
@@ -584,7 +759,6 @@ app.jinja_env.globals["float"] = float
 def index():
     orders = fetch_orders()
     portfolio = compute_portfolio()
-    import json
 
     return render_template_string(
         INDEX_TEMPLATE,
@@ -680,8 +854,36 @@ def settings_page():
         set_setting("initial_capital", request.form.get("initial_capital", "100000"))
         flash_msg("บันทึกการตั้งค่าเรียบร้อยแล้ว")
         return redirect(url_for("settings_page"))
-    initial_capital = get_setting("initial_capital", "100000")
-    return render_template_string(SETTINGS_TEMPLATE, title="Settings", initial_capital=initial_capital)
+    return render_template_string(
+        SETTINGS_TEMPLATE,
+        title="Settings",
+        initial_capital=get_setting("initial_capital", "100000"),
+        gspread_available=GSPREAD_AVAILABLE,
+        google_credentials_json=get_setting("google_credentials_json", "") or "",
+        google_spreadsheet_id=get_setting("google_spreadsheet_id", "") or "",
+        google_share_email=get_setting("google_share_email", "") or "",
+        google_last_backup=get_setting("google_last_backup", "") or "",
+        google_spreadsheet_url=get_setting("google_spreadsheet_url", "") or "",
+    )
+
+
+@app.route("/settings/google", methods=["POST"])
+def save_google_settings():
+    set_setting("google_credentials_json", request.form.get("google_credentials_json", "").strip())
+    set_setting("google_spreadsheet_id", request.form.get("google_spreadsheet_id", "").strip())
+    set_setting("google_share_email", request.form.get("google_share_email", "").strip())
+    flash_msg("บันทึกการตั้งค่า Google Sheets เรียบร้อยแล้ว")
+    return redirect(url_for("settings_page"))
+
+
+@app.route("/backup/google-sheets", methods=["POST"])
+def run_google_backup():
+    try:
+        url = backup_to_google_sheets()
+        flash_msg(f"สำรองข้อมูลไป Google Sheets สำเร็จ: {url}")
+    except Exception as exc:  # noqa: BLE001 - surface any backup failure to the user
+        flash_msg(f"สำรองข้อมูลไม่สำเร็จ: {exc}")
+    return redirect(url_for("settings_page"))
 
 
 @app.route("/uploads/<path:filename>")
