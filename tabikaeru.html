@@ -3,56 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>กบหนีเที่ยว</title>
+<title>บ้านน้องแฮมสเตอร์</title>
 <style>
-  :root { --bg: #eef7e6; --card: #ffffff; --ink: #2d3a2b; --accent: #4caf50; --muted: #8a9a86; }
+  :root { --bg: #f4efe4; --card: #ffffff; --ink: #3a3125; --accent: #d9872b; --muted: #8c7f6c; --line: rgba(120,100,70,.2); }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #1d261c; --card: #263324; --ink: #e5efe0; --accent: #6cc070; --muted: #8fa08b; }
+    :root { --bg: #201c17; --card: #2c261f; --ink: #efe6d6; --accent: #e7a35a; --muted: #a39680; --line: rgba(255,240,220,.12); }
   }
-  :root[data-theme="light"] { --bg: #eef7e6; --card: #ffffff; --ink: #2d3a2b; --accent: #4caf50; --muted: #8a9a86; }
-  :root[data-theme="dark"] { --bg: #1d261c; --card: #263324; --ink: #e5efe0; --accent: #6cc070; --muted: #8fa08b; }
+  :root[data-theme="light"] { --bg: #f4efe4; --card: #ffffff; --ink: #3a3125; --accent: #d9872b; --muted: #8c7f6c; --line: rgba(120,100,70,.2); }
+  :root[data-theme="dark"] { --bg: #201c17; --card: #2c261f; --ink: #efe6d6; --accent: #e7a35a; --muted: #a39680; --line: rgba(255,240,220,.12); }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: Tahoma, sans-serif; }
   #app { max-width: 420px; margin: 0 auto; padding: 16px; }
   header { display: flex; justify-content: space-between; align-items: center; font-size: 18px; }
-  #yard { position: relative; height: 300px; margin: 12px 0; border-radius: 16px; background: linear-gradient(#bfe6a0, #8cc96a); overflow: hidden; }
-  #frog { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); font-size: 64px; user-select: none; }
-  #frog .wear { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 22px; }
-  .clover { position: absolute; font-size: 26px; cursor: pointer; animation: pop .3s ease-out; user-select: none; }
-  @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
-  #guest { position: absolute; right: 16px; bottom: 30px; font-size: 48px; cursor: pointer; user-select: none; }
-  #guest small { position: absolute; left: -20px; top: -18px; font-size: 12px; background: var(--card); color: var(--ink); padding: 2px 6px; border-radius: 8px; white-space: nowrap; }
-  #away { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; font-size: 16px; color: #2d3a2b; background: rgba(255,255,255,.35); }
-  nav { display: flex; gap: 8px; }
-  nav button, .btn { flex: 1; padding: 10px; border: none; border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.1); }
+  #narr { margin: 12px 0; padding: 12px 14px; background: var(--card); border-left: 4px solid var(--accent); border-radius: 10px; font-size: 15px; line-height: 1.6; min-height: 70px; }
+  #narr div { animation: fade .6s ease-out; }
+  #narr div + div { color: var(--muted); font-size: 13px; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  #yard { position: relative; height: 320px; border-radius: 16px; background: linear-gradient(#cfe9f5 0%, #cfe9f5 35%, #a8d28a 35%, #7fb265 100%); overflow: hidden; }
+  #house { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); font-size: 64px; user-select: none; }
+  #plots { position: absolute; top: 150px; left: 16px; right: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .plot { height: 70px; background: #8b5e3c; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; user-select: none; box-shadow: inset 0 -4px 0 rgba(0,0,0,.2); }
+  .plot .crop { font-size: 30px; line-height: 1; }
+  .bar { width: 70%; height: 5px; background: rgba(0,0,0,.25); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: #5fb8ef; transition: width .5s; }
+  #car { position: absolute; right: 12px; bottom: 10px; font-size: 44px; cursor: pointer; user-select: none; transition: filter .5s; }
+  #hamster { position: absolute; bottom: 14px; left: 4%; font-size: 40px; user-select: none; cursor: pointer; animation: walk 16s linear infinite alternate; }
+  @keyframes walk { from { left: 4%; } to { left: 50%; } }
+  #nb { position: absolute; top: 70px; right: 10px; font-size: 40px; cursor: pointer; user-select: none; text-align: center; }
+  .bubble { font-size: 12px; background: var(--card); color: var(--ink); padding: 3px 8px; border-radius: 10px; white-space: nowrap; margin-top: 2px; }
+  #away { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; background: rgba(255,255,255,.35); color: #3a3125; font-size: 15px; }
+
+  nav { display: flex; gap: 6px; margin-top: 12px; }
+  nav button, .btn { flex: 1; padding: 9px 4px; border: none; border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.1); }
   nav button.active { background: var(--accent); color: #fff; }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
-  #panel { margin-top: 12px; background: var(--card); border-radius: 16px; padding: 12px; min-height: 180px; }
-  #panel h3 { margin: 6px 0 4px; font-size: 14px; color: var(--muted); }
-  .row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(128,128,128,.2); }
+  .btn.small { flex: none; padding: 6px 12px; }
+  #panel { margin-top: 10px; background: var(--card); border-radius: 16px; padding: 12px; min-height: 180px; }
+  #panel h3 { margin: 8px 0 4px; font-size: 14px; color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
   .row .name { flex: 1; }
-  .row .sub { font-size: 12px; color: var(--muted); }
-  .row .btn { flex: none; padding: 6px 12px; }
-  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #2d3a2b; color: #fff; padding: 10px 16px; border-radius: 12px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .sub { font-size: 12px; color: var(--muted); }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #3a3125; color: #fff; padding: 10px 16px; border-radius: 12px; opacity: 0; transition: opacity .3s; pointer-events: none; font-size: 14px; }
   #toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <span>🍀 <b id="clovers">0</b></span>
+    <span>🪙 <b id="coins">0</b></span>
     <span id="status"></span>
   </header>
 
+  <div id="narr"></div>
+
   <div id="yard">
-    <div id="frog"></div>
-    <div id="guest" style="display:none"></div>
-    <div id="away">🐸 กำลังเดินทาง...<br>กลับมาเร็วๆ นี้</div>
+    <div id="house">🏠</div>
+    <div id="plots"></div>
+    <div id="hamster" title="น้องแฮมสเตอร์">🐹</div>
+    <div id="car" title="ล้างรถ">🚗</div>
+    <div id="nb" style="display:none"></div>
+    <div id="away">🐹 น้องแฮมสเตอร์กำลังเดินทาง<br>กลับมาเร็วๆ นี้</div>
   </div>
 
   <nav>
-    <button data-tab="shop" class="active">🛒 ร้านค้า</button>
+    <button data-tab="garden" class="active">🌱 ไร่</button>
+    <button data-tab="shop">🛒 ร้าน</button>
+    <button data-tab="barter">🤝 แลกของ</button>
     <button data-tab="travel">🧳 เดินทาง</button>
-    <button data-tab="album">📖 อัลบั้ม</button>
+    <button data-tab="log">📖 บันทึก</button>
   </nav>
 
   <section id="panel"></section>
@@ -60,17 +78,18 @@
 <div id="toast"></div>
 
 <script>
-const KEY = 'tabikaeru-save-v1';
-const FOOD = ['berry', 'bread', 'sushi'];
+const KEY = 'hamster-home-v1';
 
-const ITEMS = {
-  berry: { cat: 'ขนม', name: 'ลูกเบอร์รี่', icon: '🍓', price: 5 },
-  bread: { cat: 'ขนม', name: 'ขนมปัง', icon: '🍞', price: 15 },
-  sushi: { cat: 'ขนม', name: 'ซูชิ', icon: '🍣', price: 40 },
-  hat: { cat: 'เสื้อผ้า', name: 'หมวกฟาง', icon: '👒', price: 30, once: true },
-  scarf: { cat: 'เสื้อผ้า', name: 'ผ้าพันคอ', icon: '🧣', price: 60, once: true },
-  bag: { cat: 'เดินทาง', name: 'กระเป๋าเป้', icon: '🎒', price: 20 },
-  map: { cat: 'เดินทาง', name: 'แผนที่', icon: '🗺️', price: 50, once: true },
+const CROPS = {
+  tomato: { name: 'มะเขือเทศ', icon: '🍅', seed: 5, time: 60, sell: 8 },
+  cabbage: { name: 'กะหล่ำปลี', icon: '🥬', seed: 8, time: 90, sell: 12 },
+  carrot: { name: 'แครอท', icon: '🥕', seed: 6, time: 75, sell: 10 },
+};
+
+const GIFTS = {
+  matcha: { name: 'ชาเขียว', icon: '🍵', food: true },
+  senbei: { name: 'เซ็นเบ', icon: '🍘', food: true },
+  mochi: { name: 'โมจิ', icon: '🍡', food: true },
 };
 
 const DESTS = [
@@ -80,18 +99,40 @@ const DESTS = [
   { id: 'tokyo', name: 'โตเกียว', icon: '🗼', sec: 600, gift: { icon: '🎌', name: 'ธงโตเกียว' }, needsMap: true },
 ];
 
-const GUESTS = [
-  { icon: '🐌', name: 'หอยทาก', reward: 5 },
-  { icon: '🐝', name: 'ผึ้ง', reward: 8 },
-  { icon: '🐢', name: 'เต่า', reward: 12 },
+const NEIGHBORS = [
+  { icon: '👴', name: 'ลุงโคจิ' },
+  { icon: '👵', name: 'ป้าอายุ' },
+  { icon: '👧', name: 'น้องฮารุ' },
+];
+
+const IDLE = [
+  'น้องแฮมสเตอร์กำลังขุดทรายในกระบะอย่างขยันขันแข็ง',
+  'ลมเย็นๆ พัดผ่านหลังบ้าน ใบไม้ไหวเบาๆ',
+  'แสงแดดอ่อนๆ ส่องลงบนแปลงผัก',
+  'นกตัวหนึ่งเกาะอยู่บนรั้วแล้วบินจากไป',
+  'น้องแฮมสเตอร์กำลังแทะเมล็ดทานตะวันอย่างเอร็ดอร่อย',
+  'ฝุ่นจากถนนเกาะอยู่บนตัวรถที่จอดอยู่',
+  'เสียงกระดิ่งลมดังแผ่วเบาจากชายคา',
 ];
 
 const $ = id => document.getElementById(id);
 const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
 // ---------- state ----------
 function defaults() {
-  return { clovers: 10, inv: {}, album: {}, travel: null, guest: null, nextGuest: Date.now() + 30000 };
+  return {
+    coins: 30,
+    inv: {},
+    plots: [0, 1, 2, 3].map(() => ({ crop: null, progress: 0, water: 0, dried: false })),
+    dirt: 20,
+    travel: null,
+    album: {},
+    guest: null,
+    nextGuest: Date.now() + 20000,
+    nextIdle: Date.now() + 5000,
+    log: [{ t: Date.now(), text: 'บ้านหลังนี้เงียบสงบ น้องแฮมสเตอร์กำลังนั่งพักอยู่ในกระบะทราย' }],
+  };
 }
 
 function load() {
@@ -107,180 +148,313 @@ function save() {
 }
 
 let S = load();
-let tab = 'shop';
-let selectedDest = 0;
+let tab = 'garden';
+let selectedSeed = 'tomato';
+let destIdx = 0;
+let lastTick = Date.now();
+
+function narrate(text) {
+  S.log.push({ t: Date.now(), text });
+  if (S.log.length > 60) S.log.shift();
+}
 
 // ---------- actions ----------
+function plant(i) {
+  const seedKey = 'seed_' + selectedSeed;
+  if (!S.inv[seedKey]) return toast('ไม่มีเมล็ด ไปซื้อที่ร้านก่อน');
+  S.inv[seedKey]--;
+  S.plots[i] = { crop: selectedSeed, progress: 0, water: 100, dried: false };
+  narrate(`น้องแฮมสเตอร์ช่วยปลูก${CROPS[selectedSeed].name}ลงในแปลงที่ ${i + 1}`);
+  save(); renderAll();
+}
+
+function harvest(i) {
+  const p = S.plots[i];
+  S.inv[p.crop] = (S.inv[p.crop] || 0) + 1;
+  narrate(`เก็บ${CROPS[p.crop].icon} ${CROPS[p.crop].name}จากแปลงที่ ${i + 1} ได้ 1 ผล`);
+  S.plots[i] = { crop: null, progress: 0, water: 0, dried: false };
+  save(); renderAll();
+}
+
+function water(i) {
+  S.plots[i].water = 100;
+  S.plots[i].dried = false;
+  save(); renderAll();
+}
+
+function waterAll() {
+  S.plots.forEach(p => { if (p.crop) { p.water = 100; p.dried = false; } });
+  toast('รดน้ำทุกแปลงแล้ว');
+  save(); renderAll();
+}
+
+function onPlotClick(i) {
+  const p = S.plots[i];
+  if (!p.crop) return plant(i);
+  if (p.progress >= CROPS[p.crop].time) return harvest(i);
+  water(i);
+}
+
+function washCar() {
+  if (S.dirt < 1) return toast('รถยังสะอาดอยู่');
+  const earned = 2 + Math.round(S.dirt / 20);
+  S.coins += earned;
+  narrate(`ล้างรถเสร็จ ได้เงินมา ${earned} 🪙 รถกลับมาเงางามอีกครั้ง`);
+  S.dirt = 0;
+  save(); renderAll();
+}
+
 function buy(id) {
-  const it = ITEMS[id];
-  if (it.once && S.inv[id]) return toast('มีแล้ว');
-  if (S.clovers < it.price) return toast('ใบโคลเวอร์ไม่พอ');
-  S.clovers -= it.price;
-  S.inv[id] = (S.inv[id] || 0) + 1;
+  if (id.startsWith('seed_')) {
+    const c = CROPS[id.slice(5)];
+    if (S.coins < c.seed) return toast('เงินไม่พอ');
+    S.coins -= c.seed;
+    S.inv[id] = (S.inv[id] || 0) + 1;
+  } else if (id === 'bag') {
+    if (S.coins < 20) return toast('เงินไม่พอ');
+    S.coins -= 20;
+    S.inv.bag = (S.inv.bag || 0) + 1;
+  } else if (id === 'map') {
+    if (S.inv.map) return toast('มีแผนที่แล้ว');
+    if (S.coins < 50) return toast('เงินไม่พอ');
+    S.coins -= 50;
+    S.inv.map = 1;
+  }
+  save(); renderAll();
+}
+
+function sell(id) {
+  if (!S.inv[id]) return;
+  S.inv[id]--;
+  S.coins += CROPS[id].sell;
+  save(); renderAll();
+}
+
+function arriveGuest() {
+  const n = pick(NEIGHBORS);
+  S.guest = {
+    n,
+    want: pick(Object.keys(CROPS)),
+    offer: pick(Object.keys(GIFTS)),
+    leaveAt: Date.now() + 40000,
+  };
+  narrate(`${n.icon} ${n.name} เดินมาที่หน้าบ้าน อยากได้${CROPS[S.guest.want].icon} ${CROPS[S.guest.want].name} 1 ผล`);
+}
+
+function leaveGuest(accepted) {
+  const g = S.guest;
+  if (!accepted) narrate(`${g.n.icon} ${g.n.name} ยิ้มแล้วเดินกลับบ้านไป`);
+  S.guest = null;
+  S.nextGuest = Date.now() + rnd(40, 80) * 1000;
+}
+
+function trade() {
+  const g = S.guest;
+  if (!S.inv[g.want]) return toast('ไม่มี' + CROPS[g.want].name + 'ให้แลก');
+  S.inv[g.want]--;
+  S.inv[g.offer] = (S.inv[g.offer] || 0) + 1;
+  narrate(`${g.n.icon} ${g.n.name} แลก${CROPS[g.want].name} กับ${GIFTS[g.offer].icon} ${GIFTS[g.offer].name}`);
+  leaveGuest(true);
+  save(); renderAll();
+}
+
+function declineGuest() {
+  leaveGuest(false);
   save(); renderAll();
 }
 
 function depart() {
-  const d = DESTS[selectedDest];
-  const food = FOOD.find(id => S.inv[id] > 0);
-  if (!food) return toast('ต้องมีขนมก่อนออกเดินทาง');
+  const d = DESTS[destIdx];
+  const food = Object.keys(GIFTS).find(id => GIFTS[id].food && S.inv[id] > 0);
+  if (!food) return toast('ต้องมีขนมติดกระเป๋าไปด้วย (ได้จากการแลกของ)');
   if (!S.inv.bag) return toast('ต้องมีกระเป๋าเป้ก่อน');
   S.inv[food]--;
   S.inv.bag--;
-  S.travel = { dest: selectedDest, end: Date.now() + d.sec * 1000 };
+  S.travel = { dest: destIdx, end: Date.now() + d.sec * 1000 };
   S.guest = null;
+  narrate(`น้องแฮมสเตอร์สะพายกระเป๋าเป้ออกเดินทางไป${d.name} ${d.icon}`);
   save(); renderAll();
 }
 
-function returnFrog() {
+function returnTravel() {
   const d = DESTS[S.travel.dest];
   S.album[d.id] = (S.album[d.id] || 0) + 1;
   S.travel = null;
-  toast(`🐸 กลับมาแล้ว! ได้โปสการ์ด${d.name}`);
-  save(); renderAll();
-}
-
-function collectClover(el) {
-  S.clovers++;
-  el.remove();
-  save(); renderHeader();
-}
-
-function feedGuest() {
-  const food = FOOD.find(id => S.inv[id] > 0);
-  if (!food) return toast('ต้องมีขนมให้แขกก่อน');
-  S.inv[food]--;
-  S.clovers += S.guest.reward;
-  toast(`${S.guest.icon} ${S.guest.name} ตอบแทน ${S.guest.reward} 🍀`);
-  S.guest = null;
-  S.nextGuest = Date.now() + rnd(40, 90) * 1000;
+  narrate(`น้องแฮมสเตอร์กลับมาพร้อมโปสการ์ด${d.name} และ${d.gift.icon} ${d.gift.name}`);
+  toast('🐹 น้องแฮมสเตอร์กลับมาแล้ว!');
   save(); renderAll();
 }
 
 // ---------- game loop ----------
 function tick() {
   const now = Date.now();
+  const dt = Math.min(1, (now - lastTick) / 1000);
+  lastTick = now;
 
-  if (S.travel && now >= S.travel.end) returnFrog();
+  S.plots.forEach(p => {
+    if (!p.crop) return;
+    const ready = p.progress >= CROPS[p.crop].time;
+    if (ready) return;
+    if (p.water > 0) p.progress += dt;
+    p.water = Math.max(0, p.water - dt * 1.5);
+    if (p.water === 0 && !p.dried) {
+      p.dried = true;
+      narrate(`แปลง${CROPS[p.crop].name}แห้งแล้ว ต้นไม้เริ่มเหี่ยว`);
+    }
+  });
+  S.dirt = Math.min(100, S.dirt + dt * 0.4);
+
+  if (S.travel && now >= S.travel.end) returnTravel();
 
   if (!S.travel) {
-    if (S.guest && now >= S.guest.leaveAt) {
-      S.guest = null;
-      S.nextGuest = now + rnd(40, 90) * 1000;
-    }
-    if (!S.guest && now >= S.nextGuest) {
-      const g = GUESTS[Math.floor(Math.random() * GUESTS.length)];
-      S.guest = { ...g, leaveAt: now + 20000 };
-    }
-    if (yard.children.length < 6 && Math.random() < 0.3) spawnClover();
+    if (S.guest && now >= S.guest.leaveAt) leaveGuest(false);
+    else if (!S.guest && now >= S.nextGuest) arriveGuest();
   }
 
-  renderYard();
+  if (now >= S.nextIdle) {
+    if (!S.travel) narrate(pick(IDLE));
+    S.nextIdle = now + rnd(15, 25) * 1000;
+  }
+
   renderHeader();
+  renderYard();
+  renderNarr();
   if (now % 5000 < 500) save();
 }
 
-function spawnClover() {
-  const el = document.createElement('div');
-  el.className = 'clover';
-  el.textContent = '🍀';
-  el.style.left = rnd(5, 85) + '%';
-  el.style.top = rnd(5, 65) + '%';
-  el.onclick = () => collectClover(el);
-  yard.appendChild(el);
-  setTimeout(() => el.remove(), 8000);
+// ---------- rendering ----------
+function renderNarr() {
+  $('narr').innerHTML = S.log.slice(-2).reverse().map(e => `<div>${e.text}</div>`).join('');
 }
 
-// ---------- rendering ----------
-const yard = $('yard');
+function renderHeader() {
+  $('coins').textContent = S.coins;
+  if (S.travel) {
+    const left = Math.max(0, Math.ceil((S.travel.end - Date.now()) / 1000));
+    $('status').textContent = `✈️ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  } else {
+    $('status').textContent = '';
+  }
+}
 
 function renderYard() {
   const traveling = !!S.travel;
   $('away').style.display = traveling ? 'flex' : 'none';
+  $('hamster').style.display = traveling ? 'none' : 'block';
 
-  const wear = ['hat', 'scarf'].filter(id => S.inv[id]).map(id => ITEMS[id].icon).join('');
-  $('frog').innerHTML = `<span class="wear">${wear}</span>🐸`;
-  $('frog').style.display = traveling ? 'none' : 'block';
+  $('plots').innerHTML = S.plots.map((p, i) => {
+    const c = p.crop ? CROPS[p.crop] : null;
+    let icon = '🟫';
+    if (c) icon = p.progress >= c.time ? c.icon : (p.progress < c.time / 2 ? '🌱' : '🌿');
+    return `<div class="plot" data-plot="${i}"><div class="crop">${icon}</div><div class="bar"><i style="width:${p.water}%"></i></div></div>`;
+  }).join('');
 
-  const g = $('guest');
+  $('car').style.filter = `grayscale(${(S.dirt / 100 * 0.7).toFixed(2)}) brightness(${(1 - S.dirt / 250).toFixed(2)})`;
+
+  const nb = $('nb');
   if (S.guest && !traveling) {
-    g.style.display = 'block';
-    g.innerHTML = `${S.guest.icon}<small>${S.guest.name} (แตะให้ขนม)</small>`;
-    g.onclick = feedGuest;
+    nb.style.display = 'block';
+    nb.innerHTML = `${S.guest.n.icon}<div class="bubble">อยากได้${CROPS[S.guest.want].icon}</div>`;
   } else {
-    g.style.display = 'none';
-  }
-}
-
-function renderHeader() {
-  $('clovers').textContent = S.clovers;
-  if (S.travel) {
-    const left = Math.max(0, Math.ceil((S.travel.end - Date.now()) / 1000));
-    const m = Math.floor(left / 60), s = String(left % 60).padStart(2, '0');
-    $('status').textContent = `✈️ ${m}:${s}`;
-  } else {
-    $('status').textContent = '';
+    nb.style.display = 'none';
   }
 }
 
 function renderPanel() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   const p = $('panel');
-  if (tab === 'shop') p.innerHTML = renderShop();
+  if (tab === 'garden') p.innerHTML = renderGarden();
+  else if (tab === 'shop') p.innerHTML = renderShop();
+  else if (tab === 'barter') p.innerHTML = renderBarter();
   else if (tab === 'travel') p.innerHTML = renderTravel();
-  else p.innerHTML = renderAlbum();
+  else p.innerHTML = renderLog();
+}
+
+function renderGarden() {
+  const seeds = Object.keys(CROPS).map(id => {
+    const n = S.inv['seed_' + id] || 0;
+    return `<label class="row">
+      <input type="radio" name="seed" value="${id}" ${id === selectedSeed ? 'checked' : ''}>
+      <span>${CROPS[id].icon}</span>
+      <div class="name">${CROPS[id].name}<div class="sub">เมล็ดที่มี ${n} · โตใน ${CROPS[id].time} วินาที</div></div>
+    </label>`;
+  }).join('');
+  return `<h3>เลือกเมล็ดที่จะปลูก</h3>${seeds}
+    <p class="sub">แตะแปลงว่างเพื่อปลูก · แตะแปลงที่โตแล้วเพื่อเก็บ · แตะแปลงอื่นเพื่อรดน้ำ</p>
+    <button class="btn" data-water-all style="width:100%">💧 รดน้ำทุกแปลง</button>`;
 }
 
 function renderShop() {
-  let html = '';
-  let cat = '';
-  for (const [id, it] of Object.entries(ITEMS)) {
-    if (it.cat !== cat) { cat = it.cat; html += `<h3>${cat}</h3>`; }
-    const owned = S.inv[id] || 0;
-    const disabled = (it.once && owned) || S.clovers < it.price;
-    html += `<div class="row">
-      <span>${it.icon}</span>
-      <div class="name">${it.name}<div class="sub">${it.once ? (owned ? 'มีแล้ว' : 'ซื้อครั้งเดียว') : 'มี ' + owned}</div></div>
-      <button class="btn" data-buy="${id}" ${disabled ? 'disabled' : ''}>🍀 ${it.price}</button>
-    </div>`;
+  let html = '<h3>ซื้อเมล็ดพันธุ์</h3>';
+  for (const [id, c] of Object.entries(CROPS)) {
+    const n = S.inv['seed_' + id] || 0;
+    html += `<div class="row"><span>${c.icon}</span><div class="name">${c.name}<div class="sub">มี ${n}</div></div>
+      <button class="btn small" data-buy="seed_${id}" ${S.coins < c.seed ? 'disabled' : ''}>🪙 ${c.seed}</button></div>`;
   }
+  html += '<h3>ของใช้</h3>';
+  html += `<div class="row"><span>🎒</span><div class="name">กระเป๋าเป้<div class="sub">มี ${S.inv.bag || 0} · ใช้ตอนออกเดินทาง</div></div>
+    <button class="btn small" data-buy="bag" ${S.coins < 20 ? 'disabled' : ''}>🪙 20</button></div>`;
+  html += `<div class="row"><span>🗺️</span><div class="name">แผนที่<div class="sub">${S.inv.map ? 'มีแล้ว' : 'ปลดล็อกจุดหมายใหม่'}</div></div>
+    <button class="btn small" data-buy="map" ${S.inv.map || S.coins < 50 ? 'disabled' : ''}>🪙 50</button></div>`;
+  html += '<h3>ขายผักที่เก็บได้</h3>';
+  const sellable = Object.keys(CROPS).filter(id => S.inv[id] > 0);
+  html += sellable.length ? sellable.map(id => `<div class="row"><span>${CROPS[id].icon}</span>
+    <div class="name">${CROPS[id].name}<div class="sub">มี ${S.inv[id]}</div></div>
+    <button class="btn small" data-sell="${id}">ขาย 🪙${CROPS[id].sell}</button></div>`).join('') : '<p class="sub">ยังไม่มีผักให้ขาย</p>';
   return html;
+}
+
+function renderBarter() {
+  if (!S.guest) return '<p class="sub">ตอนนี้ยังไม่มีเพื่อนบ้านมาเยี่ยม</p>';
+  const g = S.guest;
+  const have = S.inv[g.want] || 0;
+  return `<h3>${g.n.icon} ${g.n.name} มาเยี่ยม</h3>
+    <p>อยากได้ ${CROPS[g.want].icon} <b>${CROPS[g.want].name}</b> 1 ผล<br>
+    เสนอแลกกับ ${GIFTS[g.offer].icon} <b>${GIFTS[g.offer].name}</b> 1 ชิ้น</p>
+    <p class="sub">มี${CROPS[g.want].name}อยู่ ${have} ผล</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn" data-trade ${have ? '' : 'disabled'}>🤝 แลกเลย</button>
+      <button class="btn" data-decline>ไม่แลก</button>
+    </div>`;
 }
 
 function renderTravel() {
   if (S.travel) {
     const d = DESTS[S.travel.dest];
-    return `<p>🐸 กำลังเดินทางไป <b>${d.name}</b> ${d.icon}</p><p class="sub">ระหว่างรอ สามารถเปิดแอปทิ้งไว้ได้เลย</p>`;
+    return `<p>🐹 น้องแฮมสเตอร์กำลังเดินทางไป <b>${d.name}</b> ${d.icon}</p>
+      <p class="sub">ระหว่างนี้เพื่อนบ้านจะไม่มาเยี่ยม</p>`;
   }
   let html = '<h3>เลือกจุดหมาย</h3>';
   DESTS.forEach((d, i) => {
     const locked = d.needsMap && !S.inv.map;
-    html += `<div class="row" style="opacity:${locked ? .5 : 1}">
-      <input type="radio" name="dest" value="${i}" ${i === selectedDest ? 'checked' : ''} ${locked ? 'disabled' : ''}>
-      <div class="name">${d.icon} ${d.name}<div class="sub">${d.sec / 60} นาที${locked ? ' · ต้องมีแผนที่' : ''}</div></div>
-    </div>`;
+    html += `<label class="row" style="opacity:${locked ? .5 : 1}">
+      <input type="radio" name="dest" value="${i}" ${i === destIdx ? 'checked' : ''} ${locked ? 'disabled' : ''}>
+      <span>${d.icon}</span>
+      <div class="name">${d.name}<div class="sub">${d.sec / 60} นาที${locked ? ' · ต้องมีแผนที่' : ''}</div></div>
+    </label>`;
   });
-  const canGo = FOOD.some(id => S.inv[id] > 0) && S.inv.bag > 0;
-  html += `<p class="sub">ต้องใช้: ขนม 1 ชิ้น + กระเป๋าเป้ 1 ใบ</p>
+  const hasFood = Object.keys(GIFTS).some(id => GIFTS[id].food && S.inv[id] > 0);
+  const canGo = hasFood && S.inv.bag > 0;
+  html += `<p class="sub">ต้องใช้: ขนม 1 ชิ้น (จากการแลกของ) + กระเป๋าเป้ 1 ใบ</p>
     <button class="btn" data-depart ${canGo ? '' : 'disabled'} style="width:100%">ออกเดินทาง</button>`;
   return html;
 }
 
-function renderAlbum() {
-  const rows = DESTS.map(d => {
+function renderLog() {
+  const cards = DESTS.map(d => {
     const n = S.album[d.id] || 0;
-    return `<div class="row">
-      <span>${d.icon}</span>
+    return `<div class="row"><span>${d.icon}</span>
       <div class="name">${d.name}<div class="sub">โปสการ์ด ${n} ใบ</div></div>
-      <span>${n ? d.gift.icon + ' ' + d.gift.name + ' x' + n : '🔒'}</span>
-    </div>`;
+      <span>${n ? d.gift.icon + ' x' + n : '🔒'}</span></div>`;
   }).join('');
-  return `<h3>โปสการ์ดที่สะสม</h3>${rows}`;
+  const lines = S.log.slice().reverse().map(e => `<div class="row"><span class="sub">${new Date(e.t).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span><div class="name">${e.text}</div></div>`).join('');
+  return `<h3>โปสการ์ดที่สะสม</h3>${cards}<h3>เหตุการณ์ล่าสุด</h3>${lines}`;
 }
 
 function renderAll() {
   renderHeader();
   renderYard();
+  renderNarr();
   renderPanel();
 }
 
@@ -293,14 +467,31 @@ document.querySelector('nav').addEventListener('click', e => {
 });
 
 $('panel').addEventListener('click', e => {
-  const buyBtn = e.target.closest('[data-buy]');
-  if (buyBtn) return buy(buyBtn.dataset.buy);
-  if (e.target.closest('[data-depart]')) return depart();
+  const t = e.target;
+  if (t.closest('[data-buy]')) return buy(t.closest('[data-buy]').dataset.buy);
+  if (t.closest('[data-sell]')) return sell(t.closest('[data-sell]').dataset.sell);
+  if (t.closest('[data-water-all]')) return waterAll();
+  if (t.closest('[data-trade]')) return trade();
+  if (t.closest('[data-decline]')) return declineGuest();
+  if (t.closest('[data-depart]')) return depart();
 });
 
 $('panel').addEventListener('change', e => {
-  if (e.target.name === 'dest') selectedDest = Number(e.target.value);
+  if (e.target.name === 'seed') selectedSeed = e.target.value;
+  if (e.target.name === 'dest') destIdx = Number(e.target.value);
 });
+
+$('plots').addEventListener('click', e => {
+  const el = e.target.closest('[data-plot]');
+  if (el) { onPlotClick(Number(el.dataset.plot)); renderAll(); }
+});
+
+$('car').addEventListener('click', washCar);
+$('hamster').addEventListener('click', () => {
+  narrate('น้องแฮมสเตอร์หันมามองเรา แล้วเอียงคอเล็กน้อย');
+  renderAll();
+});
+$('nb').addEventListener('click', () => { tab = 'barter'; renderAll(); });
 
 let toastTimer;
 function toast(msg) {
