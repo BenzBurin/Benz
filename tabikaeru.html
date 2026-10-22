@@ -20,7 +20,10 @@
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
   #yard { position: relative; height: 320px; border-radius: 16px; background: linear-gradient(#cfe9f5 0%, #cfe9f5 35%, #a8d28a 35%, #7fb265 100%); overflow: hidden; }
-  #house { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); font-size: 64px; user-select: none; }
+  #house { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 60px; user-select: none; }
+  #shelf { position: absolute; top: 74px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; font-size: 18px; white-space: nowrap; }
+  #mail { position: absolute; top: 12px; left: 12px; font-size: 34px; cursor: pointer; user-select: none; }
+  #mail .badge { position: absolute; top: -4px; right: -10px; background: #e74c3c; color: #fff; font-size: 12px; border-radius: 10px; padding: 0 6px; display: none; }
   #plots { position: absolute; top: 150px; left: 16px; right: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .plot { height: 70px; background: #8b5e3c; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; user-select: none; box-shadow: inset 0 -4px 0 rgba(0,0,0,.2); }
   .plot .crop { font-size: 30px; line-height: 1; }
@@ -29,12 +32,12 @@
   #car { position: absolute; right: 12px; bottom: 10px; font-size: 44px; cursor: pointer; user-select: none; transition: filter .5s; }
   #hamster { position: absolute; bottom: 14px; left: 4%; font-size: 40px; user-select: none; cursor: pointer; animation: walk 16s linear infinite alternate; }
   @keyframes walk { from { left: 4%; } to { left: 50%; } }
-  #nb { position: absolute; top: 70px; right: 10px; font-size: 40px; cursor: pointer; user-select: none; text-align: center; }
+  #nb { position: absolute; top: 110px; right: 10px; font-size: 36px; cursor: pointer; user-select: none; text-align: center; }
   .bubble { font-size: 12px; background: var(--card); color: var(--ink); padding: 3px 8px; border-radius: 10px; white-space: nowrap; margin-top: 2px; }
   #away { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; background: rgba(255,255,255,.35); color: #3a3125; font-size: 15px; }
 
-  nav { display: flex; gap: 6px; margin-top: 12px; }
-  nav button, .btn { flex: 1; padding: 9px 4px; border: none; border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.1); }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  nav button, .btn { flex: 1 1 28%; padding: 9px 4px; border: none; border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.1); }
   nav button.active { background: var(--accent); color: #fff; }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
   .btn.small { flex: none; padding: 6px 12px; }
@@ -43,6 +46,8 @@
   .row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
   .row .name { flex: 1; }
   .sub { font-size: 12px; color: var(--muted); }
+  .slot { width: 56px; height: 56px; border: 2px dashed var(--line); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; user-select: none; }
+  .slots { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
   #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #3a3125; color: #fff; padding: 10px 16px; border-radius: 12px; opacity: 0; transition: opacity .3s; pointer-events: none; font-size: 14px; }
   #toast.show { opacity: 1; }
 </style>
@@ -58,19 +63,22 @@
 
   <div id="yard">
     <div id="house">🏠</div>
+    <div id="shelf"></div>
+    <div id="mail" title="กล่องจดหมาย">📮<span class="badge"></span></div>
     <div id="plots"></div>
     <div id="hamster" title="น้องแฮมสเตอร์">🐹</div>
     <div id="car" title="ล้างรถ">🚗</div>
     <div id="nb" style="display:none"></div>
-    <div id="away">🐹 น้องแฮมสเตอร์กำลังเดินทาง<br>กลับมาเร็วๆ นี้</div>
+    <div id="away">🐹 น้องแฮมสเตอร์กำลังผจญภัย<br>กลับมาเร็วๆ นี้</div>
   </div>
 
   <nav>
     <button data-tab="garden" class="active">🌱 ไร่</button>
     <button data-tab="shop">🛒 ร้าน</button>
     <button data-tab="barter">🤝 แลกของ</button>
-    <button data-tab="travel">🧳 เดินทาง</button>
-    <button data-tab="log">📖 บันทึก</button>
+    <button data-tab="bag">🎒 กระเป๋า</button>
+    <button data-tab="decor">🏮 ตกแต่ง</button>
+    <button data-tab="mail">📬 จดหมาย</button>
   </nav>
 
   <section id="panel"></section>
@@ -78,7 +86,8 @@
 <div id="toast"></div>
 
 <script>
-const KEY = 'hamster-home-v1';
+const KEY = 'hamster-home-v2';
+const BAG_SLOTS = 3;
 
 const CROPS = {
   tomato: { name: 'มะเขือเทศ', icon: '🍅', seed: 5, time: 60, sell: 8 },
@@ -86,17 +95,28 @@ const CROPS = {
   carrot: { name: 'แครอท', icon: '🥕', seed: 6, time: 75, sell: 10 },
 };
 
-const GIFTS = {
-  matcha: { name: 'ชาเขียว', icon: '🍵', food: true },
-  senbei: { name: 'เซ็นเบ', icon: '🍘', food: true },
-  mochi: { name: 'โมจิ', icon: '🍡', food: true },
+const CHARMS = {
+  omamori: { name: 'โอมาโมริ', icon: '🧧', price: 15, luck: 1 },
+  daruma: { name: 'ดารูมะ', icon: '🪆', price: 30, luck: 2 },
+  sakura: { name: 'เครื่องรางซากุระ', icon: '🌸', price: 50, luck: 3 },
+};
+
+const DECOR = {
+  osaka_fan: { name: 'พัดญี่ปุ่น', icon: '🪭' },
+  osaka_lantern: { name: 'โคมกระดาษ', icon: '🏮' },
+  fuji_globe: { name: 'ลูกแก้วหิมะ', icon: '🔮' },
+  fuji_bell: { name: 'กระดิ่งลม', icon: '🎐' },
+  kyoto_doll: { name: 'ตุ๊กตาฮินะ', icon: '🎎' },
+  kyoto_torii: { name: 'โทริอิจิ๋ว', icon: '⛩️' },
+  tokyo_flag: { name: 'ธงโตเกียว', icon: '🎌' },
+  tokyo_tower: { name: 'โมเดลโตเกียวทาวเวอร์', icon: '🗼' },
 };
 
 const DESTS = [
-  { id: 'osaka', name: 'ปราสาทโอซาก้า', icon: '🏯', sec: 60, gift: { icon: '🍡', name: 'ดังโงะ' } },
-  { id: 'fuji', name: 'ภูเขาฟูจิ', icon: '🗻', sec: 180, gift: { icon: '🧊', name: 'น้ำแข็งไส' } },
-  { id: 'kyoto', name: 'เกียวโต', icon: '⛩️', sec: 300, gift: { icon: '🎎', name: 'ตุ๊กตาฮินะ' }, needsMap: true },
-  { id: 'tokyo', name: 'โตเกียว', icon: '🗼', sec: 600, gift: { icon: '🎌', name: 'ธงโตเกียว' }, needsMap: true },
+  { id: 'osaka', name: 'ปราสาทโอซาก้า', icon: '🏯', sec: 60, items: ['osaka_fan', 'osaka_lantern'] },
+  { id: 'fuji', name: 'ภูเขาฟูจิ', icon: '🗻', sec: 180, items: ['fuji_globe', 'fuji_bell'] },
+  { id: 'kyoto', name: 'เกียวโต', icon: '⛩️', sec: 300, items: ['kyoto_doll', 'kyoto_torii'], needsMap: true },
+  { id: 'tokyo', name: 'โตเกียว', icon: '🗼', sec: 600, items: ['tokyo_flag', 'tokyo_tower'], needsMap: true },
 ];
 
 const NEIGHBORS = [
@@ -126,8 +146,12 @@ function defaults() {
     inv: {},
     plots: [0, 1, 2, 3].map(() => ({ crop: null, progress: 0, water: 0, dried: false })),
     dirt: 20,
-    travel: null,
+    bag: [],
+    adventure: null,
+    mailbox: [],
     album: {},
+    souvenirs: {},
+    shelf: [null, null, null, null, null, null],
     guest: null,
     nextGuest: Date.now() + 20000,
     nextIdle: Date.now() + 5000,
@@ -150,7 +174,6 @@ function save() {
 let S = load();
 let tab = 'garden';
 let selectedSeed = 'tomato';
-let destIdx = 0;
 let lastTick = Date.now();
 
 function narrate(text) {
@@ -158,7 +181,7 @@ function narrate(text) {
   if (S.log.length > 60) S.log.shift();
 }
 
-// ---------- actions ----------
+// ---------- garden ----------
 function plant(i) {
   const seedKey = 'seed_' + selectedSeed;
   if (!S.inv[seedKey]) return toast('ไม่มีเมล็ด ไปซื้อที่ร้านก่อน');
@@ -204,22 +227,20 @@ function washCar() {
   save(); renderAll();
 }
 
+// ---------- shop ----------
 function buy(id) {
-  if (id.startsWith('seed_')) {
-    const c = CROPS[id.slice(5)];
-    if (S.coins < c.seed) return toast('เงินไม่พอ');
-    S.coins -= c.seed;
-    S.inv[id] = (S.inv[id] || 0) + 1;
-  } else if (id === 'bag') {
-    if (S.coins < 20) return toast('เงินไม่พอ');
-    S.coins -= 20;
-    S.inv.bag = (S.inv.bag || 0) + 1;
-  } else if (id === 'map') {
+  let price;
+  if (id === 'map') {
     if (S.inv.map) return toast('มีแผนที่แล้ว');
-    if (S.coins < 50) return toast('เงินไม่พอ');
-    S.coins -= 50;
-    S.inv.map = 1;
+    price = 50;
+  } else if (id.startsWith('seed_')) {
+    price = CROPS[id.slice(5)].seed;
+  } else {
+    price = CHARMS[id.slice(6)].price;
   }
+  if (S.coins < price) return toast('เงินไม่พอ');
+  S.coins -= price;
+  S.inv[id] = (S.inv[id] || 0) + 1;
   save(); renderAll();
 }
 
@@ -230,12 +251,105 @@ function sell(id) {
   save(); renderAll();
 }
 
+// ---------- bag and adventures ----------
+function pack(key) {
+  if (S.bag.length >= BAG_SLOTS) return toast('กระเป๋าเต็มแล้ว');
+  if (!S.inv['charm_' + key]) return;
+  S.inv['charm_' + key]--;
+  S.bag.push(key);
+  narrate(`จัดกระเป๋า ใส่${CHARMS[key].icon} ${CHARMS[key].name} น้องแฮมสเตอร์ดูตื่นเต้นขึ้นมาทันที`);
+  save(); renderAll();
+}
+
+function unpack(i) {
+  const key = S.bag.splice(i, 1)[0];
+  S.inv['charm_' + key] = (S.inv['charm_' + key] || 0) + 1;
+  save(); renderAll();
+}
+
+function luckOfBag() {
+  return S.bag.reduce((sum, key) => sum + CHARMS[key].luck, 0);
+}
+
+function startAdventure() {
+  const unlocked = DESTS.map((d, i) => i).filter(i => !DESTS[i].needsMap || S.inv.map);
+  const di = pick(unlocked);
+  const d = DESTS[di];
+  const luck = luckOfBag();
+  const now = Date.now();
+  const postP = Math.min(0.9, 0.4 + 0.1 * luck);
+  const parcelP = Math.min(0.7, 0.15 + 0.1 * luck);
+
+  // three moments during the trip when the hamster may send something home
+  const deliveries = [1, 2, 3].flatMap(k => {
+    const at = now + d.sec * 1000 * k / 4;
+    const out = [];
+    if (Math.random() < postP) out.push({ at, kind: 'postcard', dest: di, done: false });
+    if (Math.random() < parcelP) out.push({ at, kind: 'parcel', item: pick(d.items), done: false });
+    return out;
+  });
+
+  S.adventure = { dest: di, start: now, end: now + d.sec * 1000, deliveries };
+  S.bag = [];
+  narrate(`น้องแฮมสเตอร์สะพายกระเป๋าออกผจญภัยไป${d.name} ${d.icon}`);
+  save(); renderAll();
+}
+
+function endAdventure() {
+  const d = DESTS[S.adventure.dest];
+  S.adventure = null;
+  narrate(`น้องแฮมสเตอร์กลับมาถึงบ้านหลังจากผจญภัยที่${d.name}`);
+  toast('🐹 น้องแฮมสเตอร์กลับมาแล้ว!');
+  save(); renderAll();
+}
+
+function collectMail(i) {
+  const m = S.mailbox.splice(i, 1)[0];
+  if (m.kind === 'postcard') {
+    const id = DESTS[m.dest].id;
+    S.album[id] = (S.album[id] || 0) + 1;
+    toast('เก็บโปสการ์ดแล้ว');
+  } else {
+    S.souvenirs[m.item] = (S.souvenirs[m.item] || 0) + 1;
+    toast(`ได้รับ ${DECOR[m.item].icon} ${DECOR[m.item].name}`);
+  }
+  save(); renderAll();
+}
+
+function collectAllMail() {
+  while (S.mailbox.length) {
+    const m = S.mailbox.pop();
+    if (m.kind === 'postcard') S.album[DESTS[m.dest].id] = (S.album[DESTS[m.dest].id] || 0) + 1;
+    else S.souvenirs[m.item] = (S.souvenirs[m.item] || 0) + 1;
+  }
+  save(); renderAll();
+}
+
+// ---------- decor ----------
+function placeDecor(id) {
+  const slot = S.shelf.indexOf(null);
+  if (slot < 0) return toast('ชั้นวางเต็มแล้ว');
+  if (!S.souvenirs[id]) return;
+  S.souvenirs[id]--;
+  S.shelf[slot] = id;
+  save(); renderAll();
+}
+
+function removeDecor(i) {
+  const id = S.shelf[i];
+  if (!id) return;
+  S.shelf[i] = null;
+  S.souvenirs[id] = (S.souvenirs[id] || 0) + 1;
+  save(); renderAll();
+}
+
+// ---------- barter ----------
 function arriveGuest() {
   const n = pick(NEIGHBORS);
   S.guest = {
     n,
     want: pick(Object.keys(CROPS)),
-    offer: pick(Object.keys(GIFTS)),
+    offer: pick(Object.keys(CHARMS)),
     leaveAt: Date.now() + 40000,
   };
   narrate(`${n.icon} ${n.name} เดินมาที่หน้าบ้าน อยากได้${CROPS[S.guest.want].icon} ${CROPS[S.guest.want].name} 1 ผล`);
@@ -252,36 +366,14 @@ function trade() {
   const g = S.guest;
   if (!S.inv[g.want]) return toast('ไม่มี' + CROPS[g.want].name + 'ให้แลก');
   S.inv[g.want]--;
-  S.inv[g.offer] = (S.inv[g.offer] || 0) + 1;
-  narrate(`${g.n.icon} ${g.n.name} แลก${CROPS[g.want].name} กับ${GIFTS[g.offer].icon} ${GIFTS[g.offer].name}`);
+  S.inv['charm_' + g.offer] = (S.inv['charm_' + g.offer] || 0) + 1;
+  narrate(`${g.n.icon} ${g.n.name} แลก${CROPS[g.want].name} กับ${CHARMS[g.offer].icon} ${CHARMS[g.offer].name}`);
   leaveGuest(true);
   save(); renderAll();
 }
 
 function declineGuest() {
   leaveGuest(false);
-  save(); renderAll();
-}
-
-function depart() {
-  const d = DESTS[destIdx];
-  const food = Object.keys(GIFTS).find(id => GIFTS[id].food && S.inv[id] > 0);
-  if (!food) return toast('ต้องมีขนมติดกระเป๋าไปด้วย (ได้จากการแลกของ)');
-  if (!S.inv.bag) return toast('ต้องมีกระเป๋าเป้ก่อน');
-  S.inv[food]--;
-  S.inv.bag--;
-  S.travel = { dest: destIdx, end: Date.now() + d.sec * 1000 };
-  S.guest = null;
-  narrate(`น้องแฮมสเตอร์สะพายกระเป๋าเป้ออกเดินทางไป${d.name} ${d.icon}`);
-  save(); renderAll();
-}
-
-function returnTravel() {
-  const d = DESTS[S.travel.dest];
-  S.album[d.id] = (S.album[d.id] || 0) + 1;
-  S.travel = null;
-  narrate(`น้องแฮมสเตอร์กลับมาพร้อมโปสการ์ด${d.name} และ${d.gift.icon} ${d.gift.name}`);
-  toast('🐹 น้องแฮมสเตอร์กลับมาแล้ว!');
   save(); renderAll();
 }
 
@@ -304,21 +396,38 @@ function tick() {
   });
   S.dirt = Math.min(100, S.dirt + dt * 0.4);
 
-  if (S.travel && now >= S.travel.end) returnTravel();
+  let mailChanged = false;
+  if (S.adventure) {
+    for (const d of S.adventure.deliveries) {
+      if (d.done || now < d.at) continue;
+      d.done = true;
+      mailChanged = true;
+      if (d.kind === 'postcard') {
+        S.mailbox.push({ kind: 'postcard', dest: d.dest });
+        narrate(`📮 โปสการ์ดจาก${DESTS[d.dest].name}มาถึงกล่องจดหมายแล้ว`);
+      } else {
+        S.mailbox.push({ kind: 'parcel', item: d.item });
+        narrate(`📦 พัสดุ${DECOR[d.item].icon} ${DECOR[d.item].name}จาก${DESTS[S.adventure.dest].name}มาถึงแล้ว`);
+      }
+    }
+    if (now >= S.adventure.end) endAdventure();
+  } else {
+    // the hamster decides on its own when to leave, if the bag has something packed
+    if (S.bag.length && Math.random() < dt / 45) startAdventure();
 
-  if (!S.travel) {
     if (S.guest && now >= S.guest.leaveAt) leaveGuest(false);
     else if (!S.guest && now >= S.nextGuest) arriveGuest();
   }
 
   if (now >= S.nextIdle) {
-    if (!S.travel) narrate(pick(IDLE));
+    if (!S.adventure) narrate(pick(IDLE));
     S.nextIdle = now + rnd(15, 25) * 1000;
   }
 
   renderHeader();
   renderYard();
   renderNarr();
+  if (mailChanged) renderPanel();
   if (now % 5000 < 500) save();
 }
 
@@ -329,18 +438,25 @@ function renderNarr() {
 
 function renderHeader() {
   $('coins').textContent = S.coins;
-  if (S.travel) {
-    const left = Math.max(0, Math.ceil((S.travel.end - Date.now()) / 1000));
-    $('status').textContent = `✈️ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  if (S.adventure) {
+    const left = Math.max(0, Math.ceil((S.adventure.end - Date.now()) / 1000));
+    $('status').textContent = `🐹 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   } else {
     $('status').textContent = '';
   }
 }
 
 function renderYard() {
-  const traveling = !!S.travel;
-  $('away').style.display = traveling ? 'flex' : 'none';
-  $('hamster').style.display = traveling ? 'none' : 'block';
+  const away = !!S.adventure;
+  $('away').style.display = away ? 'flex' : 'none';
+  $('hamster').style.display = away ? 'none' : 'block';
+
+  $('shelf').innerHTML = S.shelf.map(id => id ? DECOR[id].icon : '').join('');
+
+  const unread = S.mailbox.length;
+  const badge = document.querySelector('#mail .badge');
+  badge.textContent = unread;
+  badge.style.display = unread ? 'inline' : 'none';
 
   $('plots').innerHTML = S.plots.map((p, i) => {
     const c = p.crop ? CROPS[p.crop] : null;
@@ -352,7 +468,7 @@ function renderYard() {
   $('car').style.filter = `grayscale(${(S.dirt / 100 * 0.7).toFixed(2)}) brightness(${(1 - S.dirt / 250).toFixed(2)})`;
 
   const nb = $('nb');
-  if (S.guest && !traveling) {
+  if (S.guest && !away) {
     nb.style.display = 'block';
     nb.innerHTML = `${S.guest.n.icon}<div class="bubble">อยากได้${CROPS[S.guest.want].icon}</div>`;
   } else {
@@ -366,8 +482,9 @@ function renderPanel() {
   if (tab === 'garden') p.innerHTML = renderGarden();
   else if (tab === 'shop') p.innerHTML = renderShop();
   else if (tab === 'barter') p.innerHTML = renderBarter();
-  else if (tab === 'travel') p.innerHTML = renderTravel();
-  else p.innerHTML = renderLog();
+  else if (tab === 'bag') p.innerHTML = renderBag();
+  else if (tab === 'decor') p.innerHTML = renderDecor();
+  else p.innerHTML = renderMail();
 }
 
 function renderGarden() {
@@ -379,22 +496,26 @@ function renderGarden() {
       <div class="name">${CROPS[id].name}<div class="sub">เมล็ดที่มี ${n} · โตใน ${CROPS[id].time} วินาที</div></div>
     </label>`;
   }).join('');
-  return `<h3>เลือกเมล็ดที่จะปลูก</h3>${seeds}
+  return `<h3>เลือกผักที่จะปลูก</h3>${seeds}
     <p class="sub">แตะแปลงว่างเพื่อปลูก · แตะแปลงที่โตแล้วเพื่อเก็บ · แตะแปลงอื่นเพื่อรดน้ำ</p>
     <button class="btn" data-water-all style="width:100%">💧 รดน้ำทุกแปลง</button>`;
 }
 
 function renderShop() {
-  let html = '<h3>ซื้อเมล็ดพันธุ์</h3>';
+  let html = '<h3>เมล็ดพันธุ์</h3>';
   for (const [id, c] of Object.entries(CROPS)) {
     const n = S.inv['seed_' + id] || 0;
     html += `<div class="row"><span>${c.icon}</span><div class="name">${c.name}<div class="sub">มี ${n}</div></div>
       <button class="btn small" data-buy="seed_${id}" ${S.coins < c.seed ? 'disabled' : ''}>🪙 ${c.seed}</button></div>`;
   }
-  html += '<h3>ของใช้</h3>';
-  html += `<div class="row"><span>🎒</span><div class="name">กระเป๋าเป้<div class="sub">มี ${S.inv.bag || 0} · ใช้ตอนออกเดินทาง</div></div>
-    <button class="btn small" data-buy="bag" ${S.coins < 20 ? 'disabled' : ''}>🪙 20</button></div>`;
-  html += `<div class="row"><span>🗺️</span><div class="name">แผนที่<div class="sub">${S.inv.map ? 'มีแล้ว' : 'ปลดล็อกจุดหมายใหม่'}</div></div>
+  html += '<h3>เครื่องราง</h3>';
+  for (const [id, c] of Object.entries(CHARMS)) {
+    const n = S.inv['charm_' + id] || 0;
+    html += `<div class="row"><span>${c.icon}</span><div class="name">${c.name}<div class="sub">มี ${n} · พลังโชค ${c.luck}</div></div>
+      <button class="btn small" data-buy="charm_${id}" ${S.coins < c.price ? 'disabled' : ''}>🪙 ${c.price}</button></div>`;
+  }
+  html += '<h3>แผนที่</h3>';
+  html += `<div class="row"><span>🗺️</span><div class="name">แผนที่<div class="sub">${S.inv.map ? 'มีแล้ว · ปลดล็อกเกียวโตและโตเกียว' : 'ปลดล็อกเกียวโตและโตเกียว'}</div></div>
     <button class="btn small" data-buy="map" ${S.inv.map || S.coins < 50 ? 'disabled' : ''}>🪙 50</button></div>`;
   html += '<h3>ขายผักที่เก็บได้</h3>';
   const sellable = Object.keys(CROPS).filter(id => S.inv[id] > 0);
@@ -410,7 +531,7 @@ function renderBarter() {
   const have = S.inv[g.want] || 0;
   return `<h3>${g.n.icon} ${g.n.name} มาเยี่ยม</h3>
     <p>อยากได้ ${CROPS[g.want].icon} <b>${CROPS[g.want].name}</b> 1 ผล<br>
-    เสนอแลกกับ ${GIFTS[g.offer].icon} <b>${GIFTS[g.offer].name}</b> 1 ชิ้น</p>
+    เสนอแลกกับ ${CHARMS[g.offer].icon} <b>${CHARMS[g.offer].name}</b> 1 ชิ้น</p>
     <p class="sub">มี${CROPS[g.want].name}อยู่ ${have} ผล</p>
     <div style="display:flex;gap:8px">
       <button class="btn" data-trade ${have ? '' : 'disabled'}>🤝 แลกเลย</button>
@@ -418,37 +539,57 @@ function renderBarter() {
     </div>`;
 }
 
-function renderTravel() {
-  if (S.travel) {
-    const d = DESTS[S.travel.dest];
-    return `<p>🐹 น้องแฮมสเตอร์กำลังเดินทางไป <b>${d.name}</b> ${d.icon}</p>
-      <p class="sub">ระหว่างนี้เพื่อนบ้านจะไม่มาเยี่ยม</p>`;
-  }
-  let html = '<h3>เลือกจุดหมาย</h3>';
-  DESTS.forEach((d, i) => {
-    const locked = d.needsMap && !S.inv.map;
-    html += `<label class="row" style="opacity:${locked ? .5 : 1}">
-      <input type="radio" name="dest" value="${i}" ${i === destIdx ? 'checked' : ''} ${locked ? 'disabled' : ''}>
-      <span>${d.icon}</span>
-      <div class="name">${d.name}<div class="sub">${d.sec / 60} นาที${locked ? ' · ต้องมีแผนที่' : ''}</div></div>
-    </label>`;
-  });
-  const hasFood = Object.keys(GIFTS).some(id => GIFTS[id].food && S.inv[id] > 0);
-  const canGo = hasFood && S.inv.bag > 0;
-  html += `<p class="sub">ต้องใช้: ขนม 1 ชิ้น (จากการแลกของ) + กระเป๋าเป้ 1 ใบ</p>
-    <button class="btn" data-depart ${canGo ? '' : 'disabled'} style="width:100%">ออกเดินทาง</button>`;
-  return html;
+function renderBag() {
+  const slots = Array.from({ length: BAG_SLOTS }, (_, i) => {
+    const key = S.bag[i];
+    return key
+      ? `<div class="slot" data-unpack="${i}" title="เอาออก">${CHARMS[key].icon}</div>`
+      : '<div class="slot">＋</div>';
+  }).join('');
+  const owned = Object.keys(CHARMS).filter(id => S.inv['charm_' + id] > 0);
+  const list = owned.length ? owned.map(id => `<div class="row"><span>${CHARMS[id].icon}</span>
+    <div class="name">${CHARMS[id].name}<div class="sub">มี ${S.inv['charm_' + id]} · พลังโชค ${CHARMS[id].luck}</div></div>
+    <button class="btn small" data-pack="${id}" ${S.bag.length >= BAG_SLOTS ? 'disabled' : ''}>ใส่</button></div>`).join('')
+    : '<p class="sub">ยังไม่มีเครื่องราง ซื้อได้ที่ร้านหรือแลกจากเพื่อนบ้าน</p>';
+  return `<h3>กระเป๋าเดินทาง (${S.bag.length}/${BAG_SLOTS})</h3>
+    <div class="slots">${slots}</div>
+    <p class="sub">น้องแฮมสเตอร์จะออกไปผจญภัยเมื่อไหร่ก็ได้ เราควบคุมไม่ได้ ยิ่งพลังโชครวมสูง ยิ่งได้ของกลับมามาก</p>
+    <h3>เครื่องรางที่มี</h3>${list}`;
 }
 
-function renderLog() {
+function renderDecor() {
+  const shelf = S.shelf.map((id, i) => `<div class="slot" data-unshelf="${i}" title="เอาออก">${id ? DECOR[id].icon : '＋'}</div>`).join('');
+  const owned = Object.keys(S.souvenirs).filter(id => S.souvenirs[id] > 0);
+  const list = owned.length ? owned.map(id => `<div class="row"><span>${DECOR[id].icon}</span>
+    <div class="name">${DECOR[id].name}<div class="sub">มี ${S.souvenirs[id]}</div></div>
+    <button class="btn small" data-place="${id}">วาง</button></div>`).join('')
+    : '<p class="sub">ยังไม่มีของที่ระลึก รอพัสดุจากน้องแฮมสเตอร์นะ</p>';
+  return `<h3>ชั้นวางของ</h3>
+    <div class="slots">${shelf}</div>
+    <p class="sub">แตะช่องที่วางของไว้เพื่อเอาออก</p>
+    <h3>ของที่ระลึกที่มี</h3>${list}`;
+}
+
+function renderMail() {
+  const mail = S.mailbox.length
+    ? `<button class="btn" data-collect-all style="width:100%;margin-bottom:6px">รับทั้งหมด (${S.mailbox.length})</button>` +
+      S.mailbox.map((m, i) => {
+        const text = m.kind === 'postcard'
+          ? `📮 โปสการ์ด${DESTS[m.dest].name}`
+          : `📦 พัสดุ ${DECOR[m.item].icon} ${DECOR[m.item].name}`;
+        return `<div class="row"><div class="name">${text}</div><button class="btn small" data-collect="${i}">รับ</button></div>`;
+      }).join('')
+    : '<p class="sub">ไม่มีจดหมายใหม่</p>';
+
   const cards = DESTS.map(d => {
     const n = S.album[d.id] || 0;
     return `<div class="row"><span>${d.icon}</span>
-      <div class="name">${d.name}<div class="sub">โปสการ์ด ${n} ใบ</div></div>
-      <span>${n ? d.gift.icon + ' x' + n : '🔒'}</span></div>`;
+      <div class="name">${d.name}<div class="sub">โปสการ์ด ${n} ใบ</div></div></div>`;
   }).join('');
+
   const lines = S.log.slice().reverse().map(e => `<div class="row"><span class="sub">${new Date(e.t).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span><div class="name">${e.text}</div></div>`).join('');
-  return `<h3>โปสการ์ดที่สะสม</h3>${cards}<h3>เหตุการณ์ล่าสุด</h3>${lines}`;
+
+  return `<h3>กล่องจดหมาย</h3>${mail}<h3>อัลบั้มโปสการ์ด</h3>${cards}<h3>เหตุการณ์ล่าสุด</h3>${lines}`;
 }
 
 function renderAll() {
@@ -468,17 +609,22 @@ document.querySelector('nav').addEventListener('click', e => {
 
 $('panel').addEventListener('click', e => {
   const t = e.target;
-  if (t.closest('[data-buy]')) return buy(t.closest('[data-buy]').dataset.buy);
-  if (t.closest('[data-sell]')) return sell(t.closest('[data-sell]').dataset.sell);
-  if (t.closest('[data-water-all]')) return waterAll();
-  if (t.closest('[data-trade]')) return trade();
-  if (t.closest('[data-decline]')) return declineGuest();
-  if (t.closest('[data-depart]')) return depart();
+  const hit = (sel) => t.closest(sel);
+  if (hit('[data-buy]')) return buy(hit('[data-buy]').dataset.buy);
+  if (hit('[data-sell]')) return sell(hit('[data-sell]').dataset.sell);
+  if (hit('[data-water-all]')) return waterAll();
+  if (hit('[data-trade]')) return trade();
+  if (hit('[data-decline]')) return declineGuest();
+  if (hit('[data-pack]')) return pack(hit('[data-pack]').dataset.pack);
+  if (hit('[data-unpack]')) return unpack(Number(hit('[data-unpack]').dataset.unpack));
+  if (hit('[data-place]')) return placeDecor(hit('[data-place]').dataset.place);
+  if (hit('[data-unshelf]')) return removeDecor(Number(hit('[data-unshelf]').dataset.unshelf));
+  if (hit('[data-collect]')) return collectMail(Number(hit('[data-collect]').dataset.collect));
+  if (hit('[data-collect-all]')) return collectAllMail();
 });
 
 $('panel').addEventListener('change', e => {
   if (e.target.name === 'seed') selectedSeed = e.target.value;
-  if (e.target.name === 'dest') destIdx = Number(e.target.value);
 });
 
 $('plots').addEventListener('click', e => {
@@ -492,6 +638,7 @@ $('hamster').addEventListener('click', () => {
   renderAll();
 });
 $('nb').addEventListener('click', () => { tab = 'barter'; renderAll(); });
+$('mail').addEventListener('click', () => { tab = 'mail'; renderAll(); });
 
 let toastTimer;
 function toast(msg) {
@@ -505,7 +652,7 @@ function toast(msg) {
 // ---------- start ----------
 renderAll();
 setInterval(tick, 500);
-setInterval(() => { if (tab === 'travel' && S.travel) renderPanel(); }, 1000);
+setInterval(() => { if (S.adventure) renderHeader(); }, 1000);
 </script>
 </body>
 </html>
