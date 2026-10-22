@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>กบหนีเที่ยว</title>
+<style>
+  :root { --bg: #eef7e6; --card: #ffffff; --ink: #2d3a2b; --accent: #4caf50; --muted: #8a9a86; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1d261c; --card: #263324; --ink: #e5efe0; --accent: #6cc070; --muted: #8fa08b; }
+  }
+  :root[data-theme="light"] { --bg: #eef7e6; --card: #ffffff; --ink: #2d3a2b; --accent: #4caf50; --muted: #8a9a86; }
+  :root[data-theme="dark"] { --bg: #1d261c; --card: #263324; --ink: #e5efe0; --accent: #6cc070; --muted: #8fa08b; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: Tahoma, sans-serif; }
+  #app { max-width: 420px; margin: 0 auto; padding: 16px; }
+  header { display: flex; justify-content: space-between; align-items: center; font-size: 18px; }
+  #yard { position: relative; height: 300px; margin: 12px 0; border-radius: 16px; background: linear-gradient(#bfe6a0, #8cc96a); overflow: hidden; }
+  #frog { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); font-size: 64px; user-select: none; }
+  #frog .wear { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 22px; }
+  .clover { position: absolute; font-size: 26px; cursor: pointer; animation: pop .3s ease-out; user-select: none; }
+  @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+  #guest { position: absolute; right: 16px; bottom: 30px; font-size: 48px; cursor: pointer; user-select: none; }
+  #guest small { position: absolute; left: -20px; top: -18px; font-size: 12px; background: var(--card); color: var(--ink); padding: 2px 6px; border-radius: 8px; white-space: nowrap; }
+  #away { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; font-size: 16px; color: #2d3a2b; background: rgba(255,255,255,.35); }
+  nav { display: flex; gap: 8px; }
+  nav button, .btn { flex: 1; padding: 10px; border: none; border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.1); }
+  nav button.active { background: var(--accent); color: #fff; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  #panel { margin-top: 12px; background: var(--card); border-radius: 16px; padding: 12px; min-height: 180px; }
+  #panel h3 { margin: 6px 0 4px; font-size: 14px; color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(128,128,128,.2); }
+  .row .name { flex: 1; }
+  .row .sub { font-size: 12px; color: var(--muted); }
+  .row .btn { flex: none; padding: 6px 12px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #2d3a2b; color: #fff; padding: 10px 16px; border-radius: 12px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span>🍀 <b id="clovers">0</b></span>
+    <span id="status"></span>
+  </header>
+
+  <div id="yard">
+    <div id="frog"></div>
+    <div id="guest" style="display:none"></div>
+    <div id="away">🐸 กำลังเดินทาง...<br>กลับมาเร็วๆ นี้</div>
+  </div>
+
+  <nav>
+    <button data-tab="shop" class="active">🛒 ร้านค้า</button>
+    <button data-tab="travel">🧳 เดินทาง</button>
+    <button data-tab="album">📖 อัลบั้ม</button>
+  </nav>
+
+  <section id="panel"></section>
+</div>
+<div id="toast"></div>
+
+<script>
+const KEY = 'tabikaeru-save-v1';
+const FOOD = ['berry', 'bread', 'sushi'];
+
+const ITEMS = {
+  berry: { cat: 'ขนม', name: 'ลูกเบอร์รี่', icon: '🍓', price: 5 },
+  bread: { cat: 'ขนม', name: 'ขนมปัง', icon: '🍞', price: 15 },
+  sushi: { cat: 'ขนม', name: 'ซูชิ', icon: '🍣', price: 40 },
+  hat: { cat: 'เสื้อผ้า', name: 'หมวกฟาง', icon: '👒', price: 30, once: true },
+  scarf: { cat: 'เสื้อผ้า', name: 'ผ้าพันคอ', icon: '🧣', price: 60, once: true },
+  bag: { cat: 'เดินทาง', name: 'กระเป๋าเป้', icon: '🎒', price: 20 },
+  map: { cat: 'เดินทาง', name: 'แผนที่', icon: '🗺️', price: 50, once: true },
+};
+
+const DESTS = [
+  { id: 'osaka', name: 'ปราสาทโอซาก้า', icon: '🏯', sec: 60, gift: { icon: '🍡', name: 'ดังโงะ' } },
+  { id: 'fuji', name: 'ภูเขาฟูจิ', icon: '🗻', sec: 180, gift: { icon: '🧊', name: 'น้ำแข็งไส' } },
+  { id: 'kyoto', name: 'เกียวโต', icon: '⛩️', sec: 300, gift: { icon: '🎎', name: 'ตุ๊กตาฮินะ' }, needsMap: true },
+  { id: 'tokyo', name: 'โตเกียว', icon: '🗼', sec: 600, gift: { icon: '🎌', name: 'ธงโตเกียว' }, needsMap: true },
+];
+
+const GUESTS = [
+  { icon: '🐌', name: 'หอยทาก', reward: 5 },
+  { icon: '🐝', name: 'ผึ้ง', reward: 8 },
+  { icon: '🐢', name: 'เต่า', reward: 12 },
+];
+
+const $ = id => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+// ---------- state ----------
+function defaults() {
+  return { clovers: 10, inv: {}, album: {}, travel: null, guest: null, nextGuest: Date.now() + 30000 };
+}
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s) return { ...defaults(), ...s };
+  } catch (e) { /* storage blocked or corrupt: start fresh */ }
+  return defaults();
+}
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ }
+}
+
+let S = load();
+let tab = 'shop';
+let selectedDest = 0;
+
+// ---------- actions ----------
+function buy(id) {
+  const it = ITEMS[id];
+  if (it.once && S.inv[id]) return toast('มีแล้ว');
+  if (S.clovers < it.price) return toast('ใบโคลเวอร์ไม่พอ');
+  S.clovers -= it.price;
+  S.inv[id] = (S.inv[id] || 0) + 1;
+  save(); renderAll();
+}
+
+function depart() {
+  const d = DESTS[selectedDest];
+  const food = FOOD.find(id => S.inv[id] > 0);
+  if (!food) return toast('ต้องมีขนมก่อนออกเดินทาง');
+  if (!S.inv.bag) return toast('ต้องมีกระเป๋าเป้ก่อน');
+  S.inv[food]--;
+  S.inv.bag--;
+  S.travel = { dest: selectedDest, end: Date.now() + d.sec * 1000 };
+  S.guest = null;
+  save(); renderAll();
+}
+
+function returnFrog() {
+  const d = DESTS[S.travel.dest];
+  S.album[d.id] = (S.album[d.id] || 0) + 1;
+  S.travel = null;
+  toast(`🐸 กลับมาแล้ว! ได้โปสการ์ด${d.name}`);
+  save(); renderAll();
+}
+
+function collectClover(el) {
+  S.clovers++;
+  el.remove();
+  save(); renderHeader();
+}
+
+function feedGuest() {
+  const food = FOOD.find(id => S.inv[id] > 0);
+  if (!food) return toast('ต้องมีขนมให้แขกก่อน');
+  S.inv[food]--;
+  S.clovers += S.guest.reward;
+  toast(`${S.guest.icon} ${S.guest.name} ตอบแทน ${S.guest.reward} 🍀`);
+  S.guest = null;
+  S.nextGuest = Date.now() + rnd(40, 90) * 1000;
+  save(); renderAll();
+}
+
+// ---------- game loop ----------
+function tick() {
+  const now = Date.now();
+
+  if (S.travel && now >= S.travel.end) returnFrog();
+
+  if (!S.travel) {
+    if (S.guest && now >= S.guest.leaveAt) {
+      S.guest = null;
+      S.nextGuest = now + rnd(40, 90) * 1000;
+    }
+    if (!S.guest && now >= S.nextGuest) {
+      const g = GUESTS[Math.floor(Math.random() * GUESTS.length)];
+      S.guest = { ...g, leaveAt: now + 20000 };
+    }
+    if (yard.children.length < 6 && Math.random() < 0.3) spawnClover();
+  }
+
+  renderYard();
+  renderHeader();
+  if (now % 5000 < 500) save();
+}
+
+function spawnClover() {
+  const el = document.createElement('div');
+  el.className = 'clover';
+  el.textContent = '🍀';
+  el.style.left = rnd(5, 85) + '%';
+  el.style.top = rnd(5, 65) + '%';
+  el.onclick = () => collectClover(el);
+  yard.appendChild(el);
+  setTimeout(() => el.remove(), 8000);
+}
+
+// ---------- rendering ----------
+const yard = $('yard');
+
+function renderYard() {
+  const traveling = !!S.travel;
+  $('away').style.display = traveling ? 'flex' : 'none';
+
+  const wear = ['hat', 'scarf'].filter(id => S.inv[id]).map(id => ITEMS[id].icon).join('');
+  $('frog').innerHTML = `<span class="wear">${wear}</span>🐸`;
+  $('frog').style.display = traveling ? 'none' : 'block';
+
+  const g = $('guest');
+  if (S.guest && !traveling) {
+    g.style.display = 'block';
+    g.innerHTML = `${S.guest.icon}<small>${S.guest.name} (แตะให้ขนม)</small>`;
+    g.onclick = feedGuest;
+  } else {
+    g.style.display = 'none';
+  }
+}
+
+function renderHeader() {
+  $('clovers').textContent = S.clovers;
+  if (S.travel) {
+    const left = Math.max(0, Math.ceil((S.travel.end - Date.now()) / 1000));
+    const m = Math.floor(left / 60), s = String(left % 60).padStart(2, '0');
+    $('status').textContent = `✈️ ${m}:${s}`;
+  } else {
+    $('status').textContent = '';
+  }
+}
+
+function renderPanel() {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  const p = $('panel');
+  if (tab === 'shop') p.innerHTML = renderShop();
+  else if (tab === 'travel') p.innerHTML = renderTravel();
+  else p.innerHTML = renderAlbum();
+}
+
+function renderShop() {
+  let html = '';
+  let cat = '';
+  for (const [id, it] of Object.entries(ITEMS)) {
+    if (it.cat !== cat) { cat = it.cat; html += `<h3>${cat}</h3>`; }
+    const owned = S.inv[id] || 0;
+    const disabled = (it.once && owned) || S.clovers < it.price;
+    html += `<div class="row">
+      <span>${it.icon}</span>
+      <div class="name">${it.name}<div class="sub">${it.once ? (owned ? 'มีแล้ว' : 'ซื้อครั้งเดียว') : 'มี ' + owned}</div></div>
+      <button class="btn" data-buy="${id}" ${disabled ? 'disabled' : ''}>🍀 ${it.price}</button>
+    </div>`;
+  }
+  return html;
+}
+
+function renderTravel() {
+  if (S.travel) {
+    const d = DESTS[S.travel.dest];
+    return `<p>🐸 กำลังเดินทางไป <b>${d.name}</b> ${d.icon}</p><p class="sub">ระหว่างรอ สามารถเปิดแอปทิ้งไว้ได้เลย</p>`;
+  }
+  let html = '<h3>เลือกจุดหมาย</h3>';
+  DESTS.forEach((d, i) => {
+    const locked = d.needsMap && !S.inv.map;
+    html += `<div class="row" style="opacity:${locked ? .5 : 1}">
+      <input type="radio" name="dest" value="${i}" ${i === selectedDest ? 'checked' : ''} ${locked ? 'disabled' : ''}>
+      <div class="name">${d.icon} ${d.name}<div class="sub">${d.sec / 60} นาที${locked ? ' · ต้องมีแผนที่' : ''}</div></div>
+    </div>`;
+  });
+  const canGo = FOOD.some(id => S.inv[id] > 0) && S.inv.bag > 0;
+  html += `<p class="sub">ต้องใช้: ขนม 1 ชิ้น + กระเป๋าเป้ 1 ใบ</p>
+    <button class="btn" data-depart ${canGo ? '' : 'disabled'} style="width:100%">ออกเดินทาง</button>`;
+  return html;
+}
+
+function renderAlbum() {
+  const rows = DESTS.map(d => {
+    const n = S.album[d.id] || 0;
+    return `<div class="row">
+      <span>${d.icon}</span>
+      <div class="name">${d.name}<div class="sub">โปสการ์ด ${n} ใบ</div></div>
+      <span>${n ? d.gift.icon + ' ' + d.gift.name + ' x' + n : '🔒'}</span>
+    </div>`;
+  }).join('');
+  return `<h3>โปสการ์ดที่สะสม</h3>${rows}`;
+}
+
+function renderAll() {
+  renderHeader();
+  renderYard();
+  renderPanel();
+}
+
+// ---------- events ----------
+document.querySelector('nav').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]');
+  if (!b) return;
+  tab = b.dataset.tab;
+  renderPanel();
+});
+
+$('panel').addEventListener('click', e => {
+  const buyBtn = e.target.closest('[data-buy]');
+  if (buyBtn) return buy(buyBtn.dataset.buy);
+  if (e.target.closest('[data-depart]')) return depart();
+});
+
+$('panel').addEventListener('change', e => {
+  if (e.target.name === 'dest') selectedDest = Number(e.target.value);
+});
+
+let toastTimer;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ---------- start ----------
+renderAll();
+setInterval(tick, 500);
+setInterval(() => { if (tab === 'travel' && S.travel) renderPanel(); }, 1000);
+</script>
+</body>
+</html>
